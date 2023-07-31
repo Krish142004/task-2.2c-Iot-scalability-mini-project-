@@ -1,0 +1,60 @@
+#include <SPI.h>
+#include <SD.h>
+
+const int PIR_PIN = 2;       // PIR motion sensor pin
+const int SD_CS_PIN = 10;    // SD card chip select pin
+
+File dataLogFile;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(PIR_PIN, INPUT);
+  
+  // Initialize SD card
+  if (!SD.begin(SD_CS_PIN)) {
+    Serial.println("SD card initialization failed!");
+    while (1);
+  }
+  
+  // Create a new data log file
+  dataLogFile = SD.open("motion_data.txt", FILE_WRITE);
+  if (dataLogFile) {
+    dataLogFile.println("Timestamp, Motion Detected");
+    dataLogFile.close();
+    Serial.println("Data log file created.");
+  } else {
+    Serial.println("Error creating data log file!");
+  }
+}
+
+void loop() {
+  // Read PIR motion sensor
+  int motionDetected = digitalRead(PIR_PIN);
+  
+  if (motionDetected == HIGH) {
+    // Motion detected, log the data
+    logMotionData();
+    delay(2000); // Wait for a short period to avoid multiple entries for one motion
+  }
+}
+
+void logMotionData() {
+  // Get current timestamp
+  unsigned long timestamp = millis();
+  
+  // Open the data log file in append mode
+  dataLogFile = SD.open("motion_data.txt", FILE_WRITE);
+  
+  if (dataLogFile) {
+    // Log the data
+    dataLogFile.print(timestamp);
+    dataLogFile.print(", ");
+    dataLogFile.println("1");
+    
+    // Close the file
+    dataLogFile.close();
+    Serial.println("Motion data logged.");
+  } else {
+    Serial.println("Error opening data log file!");
+  }
+}
